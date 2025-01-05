@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Introduction to datetimeoffset</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to datetimeoffset</h1>
+
+
+
+<div id="table-of-contents" class="section level3">
+<h3>Table of Contents</h3>
+<ul>
+<li><p><a href="#overview">Overview</a></p></li>
+<li><p><a href="#examples">Examples</a></p>
+<ul>
+<li><a href="#formats">Importing/exporting datetime string formats</a></li>
+<li><a href="#heteregeneous">Heteregeneous time zones</a></li>
+<li><a href="#pdf">Augmenting pdf datetime metadata</a></li>
+</ul></li>
+<li><p><a href="#features">Features</a></p></li>
+<li><p><a href="#clock">Comparison with {clock}</a></p>
+<ul>
+<li><a href="#clock-advantages">Things {clock} can do that {datetimeoffset} can’t do</a></li>
+<li><a href="#datetimeoffset-advantages">Things {datetimeoffset} can do that {clock} can’t do</a></li>
+</ul></li>
+<li><p><a href="#parttime">Comparison with {parttime}</a></p></li>
+<li><p><a href="#serializing">Serializing</a></p></li>
+<li><p><a href="#links">External links</a></p>
+<ul>
+<li><a href="#standards">Datetime standards with UTC offsets</a></li>
+<li><a href="#similar">Related Software</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="overview" class="section level2">
+<h2><a name="overview">Overview</a></h2>
+<p><code>{datetimeoffset}</code> provides support for datetimes with optional UTC offsets and/or (possibly heteregeneous) time zones. Strengths compared to other R datetime objects:</p>
+<ol style="list-style-type: decimal">
+<li>Import/export for a number of datetime string standards often including lossless re-export of any original reduced precision</li>
+<li>Datetimes can be augmented with optional UTC offsets and/or (possibly heteregeneous) time zones.</li>
+<li>Can support up to nanosecond precision.</li>
+</ol>
+<p>The motivating use case for this package was the need for a datetime aware class that can losslessy import/export pdf metadata datetimes for <a href="https://github.com/trevorld/r-xmpdf">{xmpdf}</a>. pdf metadata datetimes are local times with a wide range of legal precisions but with unknown time zones but a possibly known UTC offset. Generally pre-existing R datetime classes either assume knowledge of a (usually single) time zone or alternatively assumed it was acceptable to fully convert to UTC time.</p>
+</div>
+<div id="examples" class="section level2">
+<h2><a name="examples">Examples</a></h2>
+<div id="importingexporting-datetime-string-formats" class="section level3">
+<h3><a name="formats">Importing/exporting datetime string formats</a></h3>
+<p><code>{datetimeoffset}</code> can import/export a number of datetime formats. Supports lossless re-export of any original reduced precision for a number of formats such as pdfmark datetime strings and ISO 8601 datetime strings.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">library</span>(<span class="st">&quot;datetimeoffset&quot;</span>)</span></code></pre></div>
+<div id="iso-8601-datetimes" class="section level4">
+<h4>ISO 8601 datetimes</h4>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_iso8601</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05&quot;</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10T20:10&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_iso8601</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10T20:10&quot;</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10T20:10:15.003-07&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_iso8601</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10T20:10:15.003-07&quot;</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10 20:10:15Z&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_iso8601</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10T20:10:15Z&quot;</code></pre>
+</div>
+<div id="pdfmark-datetimes" class="section level4">
+<h4>pdfmark datetimes</h4>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;D:202005&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_pdfmark</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;D:202005&quot;</code></pre>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;D:20200510201015+00&#39;00&#39;&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_pdfmark</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;D:20200510201015+00&#39;00&#39;&quot;</code></pre>
+</div>
+<div id="rfc-3339-with-de-facto-time-zone-extension-datetimes" class="section level4">
+<h4>RFC 3339 with de facto time zone extension datetimes</h4>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10T20:10:15.003[America/Los_Angeles]&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="st">    </span><span class="kw">format</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10T20:10:15.003-07:00[America/Los_Angeles]&quot;</code></pre>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10T20:10-07:00[America/Los_Angeles]&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a><span class="st">    </span><span class="kw">format</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10T20:10-07:00[America/Los_Angeles]&quot;</code></pre>
+</div>
+<div id="sql-serverodbc-datetime-string-literals" class="section level4">
+<h4>SQL Server/ODBC datetime string literals</h4>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="co"># SQL Server Date / ODBC SQL_TYPE_DATE / SQL_DATE</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a><span class="st">    </span><span class="kw">format_nanotime</span>(<span class="st">&quot;%F&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10&quot;</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="co"># SQL Server Smalldatetime / ODBC SQL_TYPE_TIMESTAMP / SQL_TIMESTAMP</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10 20:10:15&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a><span class="st">    </span><span class="kw">format_nanotime</span>(<span class="st">&quot;%F %T&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10 20:10:15&quot;</code></pre>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="co"># SQL Server Datetime / ODBC SQL_TYPE_TIMESTAMP / SQL_TIMESTAMP</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10 20:10:15.123&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a><span class="st">    </span><span class="kw">format_nanotime</span>(<span class="st">&quot;%F %H:%M:%E3S&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10 20:10:15.123&quot;</code></pre>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="co"># SQL Server Datetime2 / ODBC SQL_TYPE_TIMESTAMP / SQL_TIMESTAMP</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10 20:10:15.1234567&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a><span class="st">    </span><span class="kw">format_nanotime</span>(<span class="st">&quot;%F %H:%M:%E7S&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10 20:10:15.1234567&quot;</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="co"># SQL Server DatetimeOFFSET / ODBC SQL_SS_TIMESTAMPOFFSET</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10 20:10:15.1234567 -07:00&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a><span class="st">    </span><span class="kw">format_nanotime</span>(<span class="st">&quot;%F %H:%M:%E7S %Ez&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;2020-05-10 20:10:15.1234567 -07:00&quot;</code></pre>
+</div>
+<div id="extended-date-time-format-edtf" class="section level4">
+<h4>Extended Date Time Format (EDTF)</h4>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-10-05T10:10:10&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_edtf</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-10-05T10:10:10&quot;</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-XX-05&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_edtf</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-XX-05&quot;</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a><span class="co"># Lossy EDTF import situations</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;20XX-10-10&quot;</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_edtf</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;XXXX-10-10&quot;</code></pre>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-10-XX&quot;</span>) <span class="op">==</span><span class="st"> </span><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-10&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true"></a><span class="co"># Extensions to EDTF format</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-XX-19T10:XX:10&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true"></a><span class="st">    </span><span class="kw">format_edtf</span>(<span class="dt">precision =</span> <span class="st">&quot;nanosecond&quot;</span>, <span class="dt">usetz =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;2020-XX-19T10:XX:10.XXXXXXXXX+XX:XX[X]&quot;</code></pre>
+</div>
+<div id="miscellaneous-datetimes" class="section level4">
+<h4>Miscellaneous datetimes</h4>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;1918/11/11 11:11&quot;</span>) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true"></a><span class="st">    </span><span class="kw">format_strftime</span>(<span class="dt">usetz =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;1918-11-11 11:11:00 PST&quot;</code></pre>
+</div>
+</div>
+<div id="heterogeneous-time-zones" class="section level3">
+<h3><a name="heteregeneous">Heterogeneous time zones</a></h3>
+<p><code>datetimeoffset()</code> objects support heteregenous time zones:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true"></a><span class="co"># Current time in a number of time zones</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true"></a><span class="kw">datetimeoffset_now</span>(<span class="kw">c</span>(<span class="st">&quot;America/Los_Angeles&quot;</span>, <span class="st">&quot;America/New_York&quot;</span>,</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true"></a>                     <span class="st">&quot;Europe/London&quot;</span>, <span class="st">&quot;Asia/Shanghai&quot;</span>))</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[4]&gt;
+## [1] 2022-12-21T18:09:02.748841822-08:00[America/Los_Angeles]
+## [2] 2022-12-21T21:09:02.748841822-05:00[America/New_York]   
+## [3] 2022-12-22T02:09:02.748841822+00:00[Europe/London]      
+## [4] 2022-12-22T10:09:02.748841822+08:00[Asia/Shanghai]</code></pre>
+</div>
+<div id="augmenting-pdf-datetime-metadata" class="section level3">
+<h3><a name="pdf">Augmenting pdf datetime metadata</a></h3>
+<p>By default <code>grDevices::pdf()</code> stores the local datetime without any UTC offset information:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true"></a><span class="kw">library</span>(<span class="st">&quot;grid&quot;</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true"></a><span class="kw">library</span>(<span class="st">&quot;xmpdf&quot;</span>) <span class="co"># remotes::install_github(&quot;trevorld/r-xmpdf&quot;)</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true"></a></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true"></a>creation_date &lt;-<span class="st"> </span><span class="kw">datetimeoffset_now</span>()</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true"></a><span class="kw">print</span>(creation_date)</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[1]&gt;
+## [1] 2022-12-21T18:09:02.855085140-08:00[America/Los_Angeles]</code></pre>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true"></a><span class="co"># Create a two page pdf using `pdf()`</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true"></a>f &lt;-<span class="st"> </span><span class="kw">tempfile</span>(<span class="dt">fileext =</span> <span class="st">&quot;.pdf&quot;</span>)</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true"></a><span class="kw">pdf</span>(f, <span class="dt">onefile =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true"></a><span class="kw">grid.text</span>(<span class="st">&quot;Page 1&quot;</span>)</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true"></a><span class="kw">grid.newpage</span>()</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true"></a><span class="kw">grid.text</span>(<span class="st">&quot;Page 2&quot;</span>)</span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true"></a><span class="kw">Sys.sleep</span>(5L) <span class="co"># sleep to confirm time matches start of `pdf()` call</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true"></a><span class="kw">invisible</span>(<span class="kw">dev.off</span>())</span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true"></a></span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true"></a>di &lt;-<span class="st"> </span>xmpdf<span class="op">::</span><span class="kw">get_docinfo</span>(f)[[<span class="dv">1</span>]]</span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true"></a><span class="kw">print</span>(di)</span></code></pre></div>
+<pre><code>## Author: NULL
+## CreationDate: 2022-12-21T18:09:02
+## Creator: R
+## Producer: R 4.2.2
+## Title: R Graphics Output
+## Subject: NULL
+## Keywords: NULL
+## ModDate: 2022-12-21T18:09:02</code></pre>
+<p>We can use <code>{datetimeoffset}</code> with <code>{xmpdf}</code> to augment the embedded datetime metadata to also include the UTC offset information:</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true"></a>di<span class="op">$</span>creation_date &lt;-<span class="st"> </span>di<span class="op">$</span>creation_date <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true"></a><span class="st">    </span><span class="kw">set_hour_offset</span>(<span class="kw">get_hour_offset</span>(creation_date)) <span class="op">|</span><span class="er">&gt;</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true"></a><span class="st">    </span><span class="kw">set_minute_offset</span>(<span class="kw">get_minute_offset</span>(creation_date))</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true"></a>di<span class="op">$</span>mod_date &lt;-<span class="st"> </span><span class="kw">datetimeoffset_now</span>() <span class="co"># Last modified metadata now</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true"></a>di<span class="op">$</span>subject &lt;-<span class="st"> &quot;Augmenting pdf metadata with UTC offsets&quot;</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true"></a></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true"></a>xmpdf<span class="op">::</span><span class="kw">set_docinfo</span>(di, f)</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true"></a>di &lt;-<span class="st"> </span>xmpdf<span class="op">::</span><span class="kw">get_docinfo</span>(f)[[<span class="dv">1</span>]]</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true"></a><span class="kw">print</span>(di)</span></code></pre></div>
+<pre><code>## Author: NULL
+## CreationDate: 2022-12-21T18:09:02-08:00
+## Creator: R
+## Producer: GPL Ghostscript 9.55.0
+## Title: R Graphics Output
+## Subject: Augmenting pdf metadata with UTC offsets
+## Keywords: NULL
+## ModDate: 2022-12-21T18:09:08-08:00</code></pre>
+</div>
+</div>
+<div id="features" class="section level2">
+<h2><a name="features">Features</a></h2>
+<ul>
+<li><p><code>datetimeoffset()</code> objects</p>
+<ul>
+<li><p>A <code>{vctrs}</code> “record” object that supports datetimes with optional UTC offsets and/or (possibly heteregeneous) time zones</p>
+<ul>
+<li>Suitable for use as a column in data frames and tibbles</li>
+<li>Separate <code>{vctrs}</code> accessible record “fields” for year, month, day, hour, minute, second, nanosecond, subsecond_digits, hour_offset, minute_offset, and time zone all of which can all be accessed by <code>{clock}</code> (style) accessor functions (and the <code>{vctrs}</code> accessor functions).<br />
+</li>
+<li>Non-missing time zones need not all be the same value</li>
+</ul></li>
+<li><p>Supports lossless import/export of pdfmark datetime strings and a decent subset of ISO 8601 datetime strings even when datetime elements are unknown</p></li>
+</ul></li>
+<li><p><code>as_datetimeoffset()</code> converts from standard datetime strings and other R datetime objects:</p>
+<ul>
+<li><p>All <a href="https://opensource.adobe.com/dc-acrobat-sdk-docs/library/pdfmark/pdfmark_Basic.html#document-info-dictionary-docinfo">pdfmark datetime</a> strings</p></li>
+<li><p>Decent subset of <a href="https://en.wikipedia.org/wiki/ISO_8601#Combined_date_and_time_representations">ISO 8601</a> datetime strings</p>
+<ul>
+<li>Also supports the de facto RFC 3339 extension of specifying a named time zone at the end surrounded in brackets.</li>
+</ul></li>
+<li><p>The datetime strings understood by the default <code>tryFormats</code> of <code>as.POSIXlt()</code></p></li>
+<li><p>The datetime strings output by the command-line tool <code>exiftool</code></p></li>
+<li><p><code>Date()</code> objects</p></li>
+<li><p><code>POSIXct()</code> objects</p></li>
+<li><p><code>POSIXlt()</code> objects</p></li>
+<li><p><code>nanotime::nanotime()</code> objects</p></li>
+<li><p><code>parttime::parttime()</code> objects</p></li>
+<li><p>five <code>{clock}</code> calendars and three <code>{clock}</code> times</p></li>
+<li><p>Any other R datetime objects with an <code>as.POSIXct()</code> method</p></li>
+</ul></li>
+<li><p>Support for formatting output datetime strings:</p>
+<ul>
+<li><p><code>format()</code> returns RFC 3339 with de facto time zone extension strings</p></li>
+<li><p><code>format_edtf()</code> returns <a href="https://www.loc.gov/standards/datetime/">Extended Date Time Format (EDTF)</a> strings</p>
+<ul>
+<li>Supports unofficial extensions of “Unspecified Digit” feature to time components and time zones</li>
+<li><code>format_edtf(x, precision = &quot;nanosecond&quot;, usetz = TRUE)</code> prints out all information</li>
+</ul></li>
+<li><p><code>format_exiftool()</code> formats datetime strings as expected by the command-line tool <code>exiftool</code></p></li>
+<li><p><code>format_iso8601()</code> and <code>lubridate::format_ISO8601()</code> returns <a href="https://en.wikipedia.org/wiki/ISO_8601#Combined_date_and_time_representations">ISO 8601</a> strings</p></li>
+<li><p><code>format_pdfmark()</code> returns <a href="https://opensource.adobe.com/dc-acrobat-sdk-docs/library/pdfmark/pdfmark_Basic.html#document-info-dictionary-docinfo">pdfmark datetime</a> strings</p></li>
+<li><p><code>format_nanotime()</code> allows <a href="https://github.com/google/cctz/blob/6e09ceb/include/time_zone.h#L197">CCTZ style formatting</a></p>
+<ul>
+<li>Can output <a href="https://learn.microsoft.com/en-us/sql/relational-databases/native-client-odbc-date-time/data-type-support-for-odbc-date-and-time-improvements?source=recommendations&amp;view=sql-server-ver16">SQL Server / ODBC datetime literals</a></li>
+</ul></li>
+<li><p><code>format_strftime()</code> allows <code>base::strftime()</code> style formatting</p></li>
+</ul></li>
+<li><p>Support for converting to other R datetime objects:</p>
+<ul>
+<li><p><code>as.Date()</code> and <code>as_date()</code> converts the local date to a <code>base::Date()</code> object</p></li>
+<li><p><code>as.POSIXct()</code> and <code>as_date_time()</code> converts the datetime to a <code>base::POSIXct()</code> object</p></li>
+<li><p><code>as.POSIXlt()</code> converts the datetime to a <code>base::POSIXlt()</code> object</p></li>
+<li><p><code>as.nanotime()</code> converts the datetime to a <code>nanotime::nanotime()</code> object</p></li>
+<li><p><code>as.parttime()</code> converts the datetime to a <code>parttime::parttime()</code> object</p></li>
+<li><p><code>{clock}</code> calendars, times, and weekdays:</p>
+<ul>
+<li><code>as_iso_year_week_day()</code>, <code>as_year_day()</code>, <code>as_year_month_day()</code>, <code>as_year_month_weekday()</code>, <code>as_year_quarter_day()</code></li>
+<li><code>as_naive_time()</code>, <code>as_sys_time()</code>, <code>as_zoned_time()</code></li>
+<li><code>as_weekday()</code></li>
+</ul></li>
+</ul></li>
+<li><p>Support for several accessor S3 methods from <code>{clock}</code></p>
+<ul>
+<li><code>get_year()</code> and <code>set_year()</code></li>
+<li><code>get_month()</code> and <code>set_month()</code></li>
+<li><code>get_day()</code> and <code>set_day()</code></li>
+<li><code>get_hour()</code> and <code>set_hour()</code></li>
+<li><code>get_minute()</code> and <code>set_minute()</code></li>
+<li><code>get_second()</code> and <code>set_second()</code></li>
+<li><code>get_nanosecond()</code> and <code>set_nanosecond()</code></li>
+</ul></li>
+<li><p>Support for several accessor methods from <code>{lubridate}</code></p>
+<ul>
+<li><code>year()</code> and <code>year()&lt;-</code></li>
+<li><code>month()</code> and <code>month()&lt;-</code></li>
+<li><code>day()</code> and <code>day()&lt;-</code></li>
+<li><code>hour()</code> and <code>hour()&lt;-</code></li>
+<li><code>minute()</code> and <code>minute()&lt;-</code></li>
+<li><code>second()</code> and <code>second()&lt;-</code></li>
+<li><code>tz()</code> and <code>tz()&lt;-</code></li>
+</ul></li>
+<li><p>New accessor S3 methods:</p>
+<ul>
+<li><code>get_subsecond_digits()</code> and <code>set_subsecond_digits()</code></li>
+<li><code>get_hour_offset()</code> and <code>set_hour_offset()</code></li>
+<li><code>get_minute_offset()</code> and <code>set_minute_offset()</code></li>
+<li><code>get_tz()</code> and <code>set_tz()</code> (changes system time, not clock time)</li>
+</ul></li>
+<li><p>Get/set datetime “precision” S3 methods</p>
+<ul>
+<li><code>datetime_cast()</code></li>
+<li><code>datetime_narrow()</code></li>
+<li><code>datetime_precision()</code></li>
+<li><code>datetime_widen()</code></li>
+</ul></li>
+<li><p>Additional subsecond accessors</p>
+<ul>
+<li><code>get_millisecond()</code> and <code>set_millisecond()</code></li>
+<li><code>get_microsecond()</code> and <code>set_microsecond()</code></li>
+<li><code>get_subsecond()</code> and <code>set_subsecond()</code></li>
+</ul></li>
+<li><p>Other utilities:</p>
+<ul>
+<li><code>datetimeoffset_now()</code> returns the current time in the corresponding time zone(s).</li>
+<li><code>is_datetimeoffset()</code> and <code>NA_datetimeoffset_</code></li>
+<li><code>fill_tz()</code> and <code>fill_utc_offsets()</code> fill in missing time zones and missing UTC offsets respectively.</li>
+<li><code>mode_tz()</code> is an S3 method that gets most common time zone for a datetime object</li>
+<li><code>datetime_at_tz()</code> can be used to change the timezone (changes clock time, not system time). As an alternative can also use <code>lubridate::with_tz()</code>.</li>
+<li><code>get_utc_offsets()</code> and <code>set_utc_offsets()</code> gets/sets UTC offset strings</li>
+<li>Support for <code>{clock}</code> invalid datetime methods <code>invalid_detect()</code>, <code>invalid_any()</code>, <code>invalid_count()</code>, <code>invalid_remove()</code>, and <code>invalid_resolve()</code>.</li>
+<li><code>precision_to_int()</code> converts datetime precisions to an integer</li>
+<li>Support for <code>{base}</code> datetime extractors <code>weekdays()</code>, <code>months()</code>, <code>quarters()</code>, and <code>julian()</code></li>
+<li>Support for <code>{lubridate}</code> datetime extractors <code>date()</code>, <code>date()&lt;-</code>, <code>isoyear()</code>, <code>epiyear()</code>, <code>quarter()</code>, <code>semester()</code>, <code>week()</code>, <code>isoweek()</code>, <code>epiweek()</code>, <code>qday()</code>, <code>qday&lt;-()</code>, <code>wday()</code>, <code>wday&lt;-()</code>, <code>yday()</code>, <code>yday&lt;-()</code>, <code>am()</code>, <code>pm()</code>, <code>days_in_month()</code>, <code>dst()</code>, and <code>leap_year()</code>.</li>
+<li>Support for <code>{lubridate}</code> <code>force_tz()</code> and <code>with_tz()</code>.</li>
+</ul></li>
+</ul>
+</div>
+<div id="comparison-with-clock" class="section level2">
+<h2><a name="clock">Comparison with {clock}</a></h2>
+<p><strong>Note</strong>: Please feel free to <a href="https://github.com/trevorld/r-datetimeoffset/edit/main/README.Rmd">open a pull request to fix any {clock} mis-understandings or statements that are now out-of-date</a>.</p>
+<p><code>{datetimeoffset}</code> is most similar to the excellent <a href="https://clock.r-lib.org/index.html">{clock}</a> (which <code>{datetimeoffset}</code> uses internally):</p>
+<ul>
+<li>Both use <a href="https://vctrs.r-lib.org/index.html">{vctrs}</a> “record” objects</li>
+<li>Both support variable precision datetimes</li>
+<li>Both support up to nanosecond precision</li>
+<li>Both have support for local times (with perhaps unknown time zone or UTC offset), UTC times, and times with time zones</li>
+</ul>
+<div id="things-clock-can-do-that-datetimeoffset-cant-do" class="section level3">
+<h3><a name="clock-advantages">Things {clock} can do that {datetimeoffset} can’t do</a></h3>
+<ul>
+<li><p><code>{datetimeoffset}</code> only supports what <code>{clock}</code> considers “year-month-day” “calendars”. <code>{clock}</code> supports a wider variety of “calendars”:</p>
+<ul>
+<li><code>iso_year_week_day()</code></li>
+<li><code>year_day()</code></li>
+<li><code>year_month_day()</code></li>
+<li><code>year_month_weekday()</code></li>
+<li><code>year_quarter_day()</code></li>
+</ul></li>
+<li><p><code>{clock}</code> has a large, verbose, and explicit API that will force you to explicitly cast your datetimes into unambiguous formats to ensure correctness with respect to invalid dates and daylight saving time issues:</p>
+<ul>
+<li>Datetimes must either be “naive” datetime (roughly local time without UTC offsets or time zones), “sys” datetime (UTC time), and “zoned” datetime (roughly local time with time zone)</li>
+<li><code>{clock}</code> will often make you explicitly make casting decisions if necessary to avoid any possibly ambiguous datetimes or else throw an error</li>
+<li>More explicit control over the expected format of input strings</li>
+</ul></li>
+<li><p><code>{clock}</code> is a lower-level library with lots of C++ code. Will likely process large amounts of data faster with a lower memory overhead.</p></li>
+</ul>
+</div>
+<div id="things-datetimeoffset-can-do-that-clock-cant-do" class="section level3">
+<h3><a name="datetimeoffset-advantages">Things {datetimeoffset} can do that {clock} can’t do</a></h3>
+<ul>
+<li><p><code>{datetimeoffset}</code> vectors can have more than one time zone within it:</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true"></a>dts &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;1970-01-01T00:00:00-08:00[America/Los_Angeles]&quot;</span>,</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true"></a>         <span class="st">&quot;1970-01-01T00:00:00-05:00[America/New_York]&quot;</span>)</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(dts)</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[2]&gt;
+## [1] 1970-01-01T00:00:00-08:00[America/Los_Angeles]
+## [2] 1970-01-01T00:00:00-05:00[America/New_York]</code></pre>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true"></a>clock<span class="op">::</span><span class="kw">zoned_time_parse_complete</span>(dts)</span></code></pre></div>
+<pre><code>## Error:
+## ! All elements of `x` must have the same time zone name. Found different zone names of: &#39;America/Los_Angeles&#39; and &#39;America/New_York&#39;.</code></pre></li>
+<li><p><code>{datetimeoffset}</code> can import <code>POSIXt</code> objects at a microsecond precision instead of a second precision:</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true"></a>dts &lt;-<span class="st"> </span><span class="kw">as.POSIXct</span>(<span class="kw">c</span>(<span class="st">&quot;2019-01-01 01:00:00.1&quot;</span>, </span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true"></a>                    <span class="st">&quot;2019-01-01 01:00:00.123456&quot;</span>,</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true"></a>                    <span class="st">&quot;2019-01-01 01:00:00.3&quot;</span>),</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true"></a>                  <span class="dt">tz =</span> <span class="st">&quot;America/New_York&quot;</span>)</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(dts)</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[3]&gt;
+## [1] 2019-01-01T01:00:00.100000-05:00[America/New_York]
+## [2] 2019-01-01T01:00:00.123456-05:00[America/New_York]
+## [3] 2019-01-01T01:00:00.300000-05:00[America/New_York]</code></pre>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true"></a>clock<span class="op">::</span><span class="kw">as_zoned_time</span>(dts)</span></code></pre></div>
+<pre><code>## &lt;zoned_time&lt;second&gt;&lt;America/New_York&gt;[3]&gt;
+## [1] &quot;2019-01-01T01:00:00-05:00&quot; &quot;2019-01-01T01:00:00-05:00&quot;
+## [3] &quot;2019-01-01T01:00:00-05:00&quot;</code></pre></li>
+<li><p><code>{clock}</code> only distinguishes between “millisecond”, “microsecond”, and “nanosecond” sub-second precisions while <code>{datetimeoffset}</code> distinguishes all sub-second precisions up to “nanosecond”. For example a “SQL Server Datetime2” datetime supports exactly seven digits of subsecond precision (uses a hundred nanoseconds unit):</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true"></a>dt &lt;-<span class="st"> </span><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-05-10 20:10:15.1234567&quot;</span>)</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true"></a><span class="kw">print</span>(dt)</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[1]&gt;
+## [1] 2020-05-10T20:10:15.1234567</code></pre>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true"></a><span class="kw">datetime_precision</span>(dt)</span></code></pre></div>
+<pre><code>## [1] &quot;hundred nanoseconds&quot;</code></pre>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true"></a>nt &lt;-<span class="st"> </span>clock<span class="op">::</span><span class="kw">naive_time_parse</span>(<span class="st">&quot;2020-05-10 20:10:15.1234567&quot;</span>, </span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true"></a>                              <span class="dt">format =</span> <span class="st">&quot;%F %T&quot;</span>, <span class="dt">precision =</span> <span class="st">&quot;nanosecond&quot;</span>)</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true"></a><span class="kw">print</span>(nt)</span></code></pre></div>
+<pre><code>## &lt;clock_naive_time[1]&gt;
+## [1] &quot;2020-05-10T20:10:15.123456700&quot;</code></pre>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true"></a><span class="kw">datetime_precision</span>(nt)</span></code></pre></div>
+<pre><code>## [1] &quot;nanosecond&quot;</code></pre></li>
+<li><p><code>{datetimeoffset}</code> vectors allow lower precision elements to be missing:</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true"></a><span class="kw">datetimeoffset</span>(<span class="dv">2020</span>, <span class="ot">NA_integer_</span>, <span class="dv">10</span>) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format_edtf</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2020-XX-10&quot;</code></pre>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true"></a>clock<span class="op">::</span><span class="kw">year_month_day</span>(<span class="dv">2020</span>, <span class="ot">NA_integer_</span>, <span class="dv">10</span>)</span></code></pre></div>
+<pre><code>## &lt;year_month_day&lt;day&gt;[1]&gt;
+## [1] NA</code></pre></li>
+<li><p><code>{datetimeoffset}</code> vectors allow datetimes with varying precisions:</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true"></a><span class="kw">c</span>(<span class="kw">datetimeoffset</span>(<span class="dv">2020</span>), <span class="kw">datetimeoffset</span>(<span class="dv">2020</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[2]&gt;
+## [1] 2020       2020-01-01</code></pre>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true"></a><span class="kw">c</span>(clock<span class="op">::</span><span class="kw">year_month_day</span>(<span class="dv">2020</span>),</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true"></a>  clock<span class="op">::</span><span class="kw">year_month_day</span>(<span class="dv">2020</span>, <span class="dv">1</span>, <span class="dv">1</span>))</span></code></pre></div>
+<pre><code>## Error in `vec_c()`:
+## ! Can&#39;t combine `..1` &lt;year_month_day&lt;year&gt;&gt; and `..2` &lt;year_month_day&lt;day&gt;&gt;.
+## Can&#39;t combine calendars with different precisions.</code></pre></li>
+<li><p><code>{datetimeoffset}</code> vectors preserves UTC offsets even when the time zone is unknown:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;1970-01-01T00:00:00-08:00&quot;</span>)</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[1]&gt;
+## [1] 1970-01-01T00:00:00-08:00</code></pre>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true"></a>clock<span class="op">::</span><span class="kw">sys_time_parse_RFC_3339</span>(<span class="st">&quot;1970-01-01T00:00:00-08:00&quot;</span>, <span class="dt">offset =</span> <span class="st">&quot;%Ez&quot;</span>)</span></code></pre></div>
+<pre><code>## &lt;clock_sys_time[1]&gt;
+## [1] &quot;1970-01-01T08:00:00&quot;</code></pre></li>
+<li><p><code>{datetimeoffset}</code> vectors can contain a mix of local/global datetimes with various knowledge of UTC offsets and/or time zones:</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="kw">c</span>(<span class="st">&quot;1970-01-01T00:00:00&quot;</span>,</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true"></a>                    <span class="st">&quot;1970-01-01T00:00:00Z&quot;</span>,</span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true"></a>                    <span class="st">&quot;1970-01-01T00:00:00-08:00&quot;</span>,</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true"></a>                    <span class="st">&quot;1970-01-01T00:00:00-08:00[America/Los_Angeles]&quot;</span>,</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true"></a>                    <span class="st">&quot;1970-01-01T00:00:00[America/Los_Angeles]&quot;</span>))</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[5]&gt;
+## [1] 1970-01-01T00:00:00                           
+## [2] 1970-01-01T00:00:00Z                          
+## [3] 1970-01-01T00:00:00-08:00                     
+## [4] 1970-01-01T00:00:00-08:00[America/Los_Angeles]
+## [5] 1970-01-01T00:00:00-08:00[America/Los_Angeles]</code></pre></li>
+<li><p><code>{datetimeoffset}</code> can import/export <a href="https://en.wikipedia.org/wiki/Leap_second">leap seconds</a>:</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true"></a>dt &lt;-<span class="st"> </span><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2005-12-31T23:59:60Z&quot;</span>)</span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true"></a><span class="kw">format</span>(dt)</span></code></pre></div>
+<pre><code>## [1] &quot;2005-12-31T23:59:60Z&quot;</code></pre>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true"></a><span class="kw">as.POSIXlt</span>(dt) <span class="op">|</span><span class="er">&gt;</span><span class="st"> </span><span class="kw">format</span>()</span></code></pre></div>
+<pre><code>## [1] &quot;2005-12-31 23:59:60&quot;</code></pre>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true"></a>clock<span class="op">::</span><span class="kw">sys_time_parse</span>(<span class="st">&quot;2005-12-31T23:59:60&quot;</span>)</span></code></pre></div>
+<pre><code>## Warning: Failed to parse 1 string at location 1. Returning `NA` at that
+## location.</code></pre>
+<pre><code>## &lt;clock_sys_time[1]&gt;
+## [1] NA</code></pre>
+<div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true"></a>clock<span class="op">::</span><span class="kw">year_month_day</span>(<span class="dv">2005</span>, <span class="dv">12</span>, <span class="dv">31</span>, <span class="dv">23</span>, <span class="dv">59</span>, <span class="dv">60</span>)</span></code></pre></div>
+<pre><code>## Error:
+## ! `second` must be within the range of [0, 59], not 60.</code></pre></li>
+</ul>
+</div>
+</div>
+<div id="comparison-with-parttime" class="section level2">
+<h2><a name="parttime">Comparison with {parttime}</a></h2>
+<p><strong>Note</strong>: Please feel free to <a href="https://github.com/trevorld/r-datetimeoffset/edit/main/README.Rmd">open a pull request to fix any {parttime} mis-understandings or statements that are now out-of-date</a>.</p>
+<p>A <code>{datetimeoffset}</code> is also similar to the excellent <a href="https://dgkf.github.io/parttime/">{parttime}</a>:</p>
+<ul>
+<li><p>Both are <code>{vctrs}</code> datetime objects that allow mixed precision datetimes including support for UTC offsets</p></li>
+<li><p><code>{parttime}</code> supports more advanced <a href="https://dgkf.github.io/parttime/#partial-datetime-comparisons">mixed precision comparisons</a></p></li>
+<li><p><code>{parttime}</code> uses 64-bit floating point numbers instead of 32-bit integers to store various fields so can theoretically support years greater than 2,147,483,647 as well as subseconds at greater than nanosecond precision (although there are known issues with using floating point numbers such as <a href="https://docs.python.org/3/tutorial/floatingpoint.html#representation-error">representation error</a> avoided by representing subseconds as an integer)</p></li>
+<li><p><code>{datetimeoffset}</code> uses more fields to store UTC offsets and fractional seconds so there are cases where <code>{datetimeoffset}</code> will be more lossless importing/exporting certain datetime strings compared to <code>{parttime}</code>:</p>
+<div class="sourceCode" id="cb87"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true"></a><span class="kw">as_datetimeoffset</span>(<span class="st">&quot;2020-01-02T03:04:05.10000+05&quot;</span>)</span></code></pre></div>
+<pre><code>## &lt;datetimeoffset[1]&gt;
+## [1] 2020-01-02T03:04:05.10000+05</code></pre>
+<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true"></a>parttime<span class="op">::</span><span class="kw">as.parttime</span>(<span class="st">&quot;2020-01-02T03:04:05.10000+05&quot;</span>)</span></code></pre></div>
+<pre><code>## Initializing default timezone offset, which is assumed when timezone
+## parts are missing.
+## 
+##     options(&quot;parttime.assume_tz_offset&quot; = 0L)</code></pre>
+<pre><code>## &lt;partial_time&lt;YMDhms+tz&gt;[1]&gt; 
+## [1] &quot;2020-01-02 03:04:05.100+05:00&quot;</code></pre></li>
+</ul>
+</div>
+<div id="serializing" class="section level2">
+<h2><a name="serializing">Serializing</a></h2>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true"></a>dts &lt;-<span class="st"> </span><span class="kw">datetimeoffset</span>(<span class="dt">year =</span> <span class="kw">c</span>(<span class="dv">2020</span>, <span class="dv">1980</span>), <span class="dt">month =</span> <span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">10</span>), <span class="dt">day =</span> <span class="kw">c</span>(<span class="dv">15</span>, <span class="ot">NA</span>))</span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true"></a><span class="kw">format_edtf</span>(dts)</span></code></pre></div>
+<pre><code>## [1] &quot;2020-XX-15&quot; &quot;1980-10&quot;</code></pre>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true"></a><span class="co"># serialize via data frame</span></span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true"></a>df &lt;-<span class="st"> </span>vctrs<span class="op">::</span><span class="kw">vec_data</span>(dts)</span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true"></a><span class="kw">print</span>(df)</span></code></pre></div>
+<pre><code>##   year month day hour minute second nanosecond subsecond_digits hour_offset
+## 1 2020    NA  15   NA     NA     NA         NA               NA          NA
+## 2 1980    10  NA   NA     NA     NA         NA               NA          NA
+##   minute_offset   tz
+## 1            NA &lt;NA&gt;
+## 2            NA &lt;NA&gt;</code></pre>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true"></a>dts_df &lt;-<span class="st"> </span><span class="kw">do.call</span>(datetimeoffset, <span class="kw">as.list</span>(df))</span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true"></a><span class="kw">all.equal</span>(dts, dts_df)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb98"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true"></a><span class="co"># serialize via base::serialize() or base::saveRDS()</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true"></a>x &lt;-<span class="st"> </span><span class="kw">serialize</span>(dts, <span class="ot">NULL</span>) <span class="co"># raw binary vector</span></span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true"></a>dts_x &lt;-<span class="st"> </span><span class="kw">unserialize</span>(x)</span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true"></a><span class="kw">all.equal</span>(dts, dts_x)</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+</div>
+<div id="external-links" class="section level2">
+<h2><a name="links">External links</a></h2>
+<p>Please feel free to <a href="https://github.com/trevorld/r-datetimeoffset/edit/main/README.Rmd">open a pull request to add any missing relevant links</a>.</p>
+<div id="datetime-standards-with-utc-offsets" class="section level3">
+<h3><a name="standards">Datetime standards with UTC offsets</a></h3>
+<ul>
+<li><p><a href="https://en.wikipedia.org/wiki/ISO_8601#Combined_date_and_time_representations">ISO 8601</a></p>
+<ul>
+<li><a href="https://github.com/adobe/xmp-docs/blob/master/XMPNamespaces/XMPDataTypes/CoreProperties.md#date">XMP datetimes</a></li>
+</ul></li>
+<li><p><a href="https://opensource.adobe.com/dc-acrobat-sdk-docs/library/pdfmark/pdfmark_Basic.html#document-info-dictionary-docinfo">pdfmark datetimes</a></p></li>
+<li><p>RFC 3339 with de facto time zone extension</p></li>
+<li><p><a href="https://learn.microsoft.com/en-us/sql/relational-databases/native-client-odbc-date-time/data-type-support-for-odbc-date-and-time-improvements?source=recommendations&amp;view=sql-server-ver16">SQL Server / ODBC datetime literals</a></p></li>
+<li><p><a href="https://www.loc.gov/standards/datetime/">Extended Date Time Format (EDTF)</a></p></li>
+</ul>
+</div>
+<div id="related-software" class="section level3">
+<h3><a name="similar">Related software</a></h3>
+<div id="r-packages" class="section level4">
+<h4>R packages</h4>
+<ul>
+<li><a href="https://clock.r-lib.org/index.html">clock</a></li>
+<li><a href="https://lubridate.tidyverse.org/index.html">lubridate</a></li>
+<li><a href="https://eddelbuettel.github.io/nanotime/">nanotime</a></li>
+<li><a href="https://github.com/dgkf/parttime/">parttime</a></li>
+<li><a href="https://github.com/vspinu/timechange/">timechange</a></li>
+<li><a href="https://vctrs.r-lib.org/index.html">vctrs</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
